@@ -1,0 +1,415 @@
+<title>WatchtowerGG — Steam competitor alerts for indie devs</title>
+<meta name="description" content="Stop checking SteamDB every morning. WatchtowerGG watches 3–10 Steam competitors you pick and pings you only when price, reviews, charts, or updates change.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #171d25;
+    --bg-alt: #1b2838;
+    --card: #223549;
+    --card-border: #2f4358;
+    --text: #c7d5e0;
+    --text-dim: #8f9ba8;
+    --text-bright: #ffffff;
+    --accent: #66c0f4;
+    --accent-dim: #4a90c2;
+    --price: #a4d007;
+    --max-width: 880px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image: linear-gradient(180deg, var(--bg-alt) 0%, var(--bg) 420px);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+  .wrap {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  header.hero {
+    padding: 64px 0 48px;
+    text-align: center;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .kicker {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(102, 192, 244, 0.1);
+    border: 1px solid rgba(102, 192, 244, 0.3);
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.15;
+    color: var(--text-bright);
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .subhead {
+    font-size: 18px;
+    color: var(--text);
+    max-width: 620px;
+    margin: 0 auto 32px;
+  }
+  .subhead strong { color: var(--text-bright); }
+  .cta-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 14px 28px;
+    border-radius: 6px;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: linear-gradient(180deg, #7fd0ff, var(--accent));
+    color: #0e1b24;
+  }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    font-weight: 500;
+    font-size: 15px;
+    padding: 12px 24px;
+  }
+  .btn-secondary:hover { border-color: var(--accent-dim); color: var(--accent); }
+  section { padding: 56px 0; border-bottom: 1px solid var(--card-border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 26px;
+    color: var(--text-bright);
+    text-align: center;
+    margin: 0 0 40px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+  .card h3 {
+    font-size: 17px;
+    color: var(--text-bright);
+    margin: 0 0 10px;
+  }
+  .card p { margin: 0; color: var(--text-dim); font-size: 15px; }
+  .steps { counter-reset: step; }
+  .step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 18px 0;
+  }
+  .step-num {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(102, 192, 244, 0.12);
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step h3 { margin: 0 0 6px; color: var(--text-bright); font-size: 16px; }
+  .step p { margin: 0; color: var(--text-dim); font-size: 15px; }
+  ul.monitor {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  ul.monitor li {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 15px;
+  }
+  ul.monitor li strong { color: var(--text-bright); }
+  .monitor-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 18px;
+    font-style: italic;
+  }
+  .pricing-cards {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .price-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+  }
+  .price-card.founding {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(102, 192, 244, 0.25);
+    position: relative;
+  }
+  .badge {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    background: var(--accent);
+    color: #0e1b24;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .price-card h3 { margin: 6px 0 4px; font-size: 18px; color: var(--text-bright); }
+  .price-tag { font-size: 34px; font-weight: 700; color: var(--price); margin: 8px 0 4px; }
+  .price-tag span { font-size: 15px; color: var(--text-dim); font-weight: 400; }
+  .price-note { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; }
+  .price-card ul { margin: 0 0 22px; padding-left: 18px; color: var(--text); font-size: 14px; }
+  .price-card ul li { margin-bottom: 6px; }
+  .price-card .btn { margin-top: auto; text-align: center; }
+  .refund-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 18px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  details.faq {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+  details.faq summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-bright);
+    font-size: 15px;
+    list-style: none;
+  }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::before {
+    content: "+ ";
+    color: var(--accent);
+  }
+  details.faq[open] summary::before { content: "– "; }
+  details.faq p {
+    color: var(--text-dim);
+    font-size: 14.5px;
+    margin: 12px 0 0;
+  }
+  .final-cta {
+    text-align: center;
+    padding: 56px 0;
+  }
+  .final-cta h2 { margin-bottom: 16px; }
+  .final-cta p.lead { color: var(--text-dim); margin-bottom: 28px; }
+  footer {
+    padding: 32px 0 48px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+  footer a { color: var(--text-dim); text-decoration: underline; }
+  footer .disclaimer { margin-top: 10px; }
+  @media (max-width: 720px) {
+    h1 { font-size: 30px; }
+    .grid-3 { grid-template-columns: 1fr; }
+    ul.monitor { grid-template-columns: 1fr; }
+    .pricing-cards { grid-template-columns: 1fr; }
+    section { padding: 40px 0; }
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">Founding access — 20 spots</span>
+    <h1>Stop checking SteamDB every morning.</h1>
+    <p class="subhead">You already know which 3–10 games are your real competition. Tell us once. We watch their <strong>price, discounts, review velocity, chart position, and updates</strong> — and only bug you when something actually changes.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="GUMROAD_URL_PLACEHOLDER">Reserve founding spot — $39/yr</a>
+      <a class="btn btn-secondary" href="WAITLIST_URL_PLACEHOLDER">Join the waitlist (free)</a>
+    </div>
+  </div>
+</header>
+
+<section id="pain">
+  <div class="wrap">
+    <h2>The 3 pain scenarios</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>"I found out three weeks late."</h3>
+        <p>A game in your genre ran a 40% discount for a week and picked up a wave of new reviews. You didn't notice until you scrolled past it on the store front page. By then the moment to react was gone.</p>
+      </div>
+      <div class="card">
+        <h3>"I don't have an hour a day for this."</h3>
+        <p>SteamDB and Gamalytic are great, if you actually open them. Most solo devs don't check them daily — so the monitoring you're supposed to be doing quietly stops after week one.</p>
+      </div>
+      <div class="card">
+        <h3>"I need a tap on the shoulder, not a dashboard."</h3>
+        <p>Spreadsheet, bookmark folder, calendar reminder to "check competitors" — works for ten days, then it doesn't. What you actually want: nothing, nothing, nothing, then one message that says "this happened, go look."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Tell us your list.</h3>
+          <p>Pick 3–10 games on Steam — direct competitors, aspirational comps, whatever you personally watch. Takes two minutes.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>We check them, quietly, every day.</h3>
+          <p>No dashboard to log into, no daily digest to skim. We only make noise when something crosses a threshold worth knowing about.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>You get pinged where you already are.</h3>
+          <p>Email or Discord webhook — your call. One line: what changed, on which game, with a link to go look.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="monitor">
+  <div class="wrap">
+    <h2>What we monitor</h2>
+    <ul class="monitor">
+      <li><strong>Price changes and discounts</strong> — including regional pricing, not just US price</li>
+      <li><strong>Review count spikes</strong> — a sudden jump usually means a launch, a big sale, or a wave of press/streamers</li>
+      <li><strong>Chart movement</strong> — entering or dropping out of Top Sellers / New &amp; Trending / Popular Upcoming</li>
+      <li><strong>Major updates</strong> — a big patch, DLC announcement, or store page overhaul</li>
+    </ul>
+    <p class="monitor-note">Threshold sensitivity is adjustable per game — you decide what counts as "worth a ping" vs. noise.</p>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <h2>Pricing</h2>
+    <div class="pricing-cards">
+      <div class="price-card founding">
+        <span class="badge">First 20 spots</span>
+        <h3>Founding Member</h3>
+        <div class="price-tag">$39<span>/year, locked forever</span></div>
+        <div class="price-note">≈ $3.25/mo — a 64% discount off the eventual standard price. Your price never goes up, even after we raise it for new members.</div>
+        <ul>
+          <li>Everything above, for up to 10 tracked games</li>
+          <li>Email + Discord alerts</li>
+          <li>Price locked for as long as you stay subscribed</li>
+        </ul>
+        <a class="btn btn-primary" href="GUMROAD_URL_PLACEHOLDER">Reserve founding spot — $39/yr</a>
+      </div>
+      <div class="price-card">
+        <h3>Standard</h3>
+        <div class="price-tag">$9<span>/mo</span></div>
+        <div class="price-note">After founding spots fill, or if you'd rather not commit for a year. Cancel anytime.</div>
+        <ul>
+          <li>Same monitoring, month to month</li>
+          <li>No annual commitment</li>
+          <li>Available once founding spots are gone</li>
+        </ul>
+        <a class="btn btn-secondary" href="WAITLIST_URL_PLACEHOLDER">Join the waitlist (free)</a>
+      </div>
+    </div>
+    <p class="refund-note">Not sure yet? Join the free waitlist — no card required, and we'll email you the moment we're live, with first access to the founding price before it's gone. Founding annual members are covered by a straightforward full-refund policy if we don't ship what we promised — details go out with your receipt.</p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+
+    <details class="faq">
+      <summary>Where does your data come from?</summary>
+      <p>Everything we track is built on Steam's own public store and API data — the same publicly visible prices, review counts, charts, and store pages anyone can see by visiting the Steam store. We don't scrape anything private, and we don't need your Steam account or credentials to track a competitor's public game page.</p>
+    </details>
+
+    <details class="faq">
+      <summary>Are you affiliated with Valve or Steam?</summary>
+      <p>No. We are an independent, third-party tool built by an indie developer, for indie developers. "Steam" refers to Valve's platform; we are not Valve, and this product is not endorsed by or affiliated with Valve Corporation.</p>
+    </details>
+
+    <details class="faq">
+      <summary>Can I cancel anytime?</summary>
+      <p>Yes. The standard monthly plan cancels anytime, no questions asked. Founding annual members are covered by a straightforward refund policy if we don't ship what we promised — details go out with your receipt.</p>
+    </details>
+
+    <details class="faq">
+      <summary>How often will I actually get alerted?</summary>
+      <p>That depends entirely on your competitors — that's the point. If nothing crosses your threshold, you get zero emails that week. This is deliberately not a daily digest. Expect anywhere from a few alerts a month to a few a week, depending on how active your tracked list is.</p>
+    </details>
+
+    <details class="faq">
+      <summary>What alert channels do you support?</summary>
+      <p>Email at launch, plus a Discord webhook so alerts can drop straight into your studio's server. If you need Slack or something else, tell us on the waitlist form — we're prioritizing based on what people actually ask for.</p>
+    </details>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap">
+    <h2>Ready to stop checking manually?</h2>
+    <p class="lead">20 founding spots at $39/year, locked forever. Or drop your email and we'll ping you when it's live.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="GUMROAD_URL_PLACEHOLDER">Reserve founding spot — $39/yr</a>
+      <a class="btn btn-secondary" href="WAITLIST_URL_PLACEHOLDER">Join the waitlist (free)</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Built by one indie dev who got tired of refreshing SteamDB.<br>Questions? <a href="mailto:prayer0718@gmail.com">prayer0718@gmail.com</a></p>
+    <p class="disclaimer">WatchtowerGG is not affiliated with Valve.</p>
+  </div>
+</footer>
